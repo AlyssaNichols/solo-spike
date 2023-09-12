@@ -51,17 +51,28 @@ AND "transactions_completed" < 5;
 -- STRETCH GOALS--------
 --1. Anthony moved to Santa Fe. Update his location in the table.
 
+UPDATE accounts
+SET "city" = 'Santa Fe'
+WHERE "username" = 'Anthony';
 
 -- 2. Grace closed her account. Remove her from the database.
 
+DELETE FROM "accounts" WHERE "username"='Grace';
 
 -- 3. Travis made a withdrawal of $20,000. What's their new balance? NOTE: Research `RETURNING`
 
+UPDATE "accounts"
+SET "account_balance" = account_balance - 20000.00
+WHERE "username" = 'Travis'
+RETURNING account_balance;
 
 -- 4. The Bank needs to track last names. NOTE: Research `ALTER TABLE`
 
+ALTER TABLE "accounts"
+ADD COLUMN last_name varchar(80);
 
 -- 5. What is the total amount of money held by the bank? NOTE: Research `SUM`
+
 
 
 -- 6. What is the total amount of money held by the bank at each location? NOTE: Research `GROUP BY`
