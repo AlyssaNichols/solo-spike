@@ -73,8 +73,12 @@ ADD COLUMN last_name varchar(80);
 
 -- 5. What is the total amount of money held by the bank? NOTE: Research `SUM`
 
-
+SELECT SUM(account_balance) -- AS total_balance can add this in there (where it is positioned minus the dashes)as a label
+FROM "accounts"
 
 -- 6. What is the total amount of money held by the bank at each location? NOTE: Research `GROUP BY`
 
+SELECT city, SUM(account_balance)
+FROM "accounts"
+GROUP BY "city";
 
