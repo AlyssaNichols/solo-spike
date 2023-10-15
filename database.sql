@@ -42,7 +42,7 @@ CREATE TABLE line_item (
     "service_id" INT REFERENCES services(id) NOT NULL,
     "date_performed" DATE NOT NULL,
     "service_price" DECIMAL NOT NULL,
-    "invoice_id" INT REFERENCES invoice(id) NOT NULL
+    "invoice_id" INT REFERENCES invoice(id)
 );
 
 
@@ -135,54 +135,53 @@ CREATE TABLE line_item (
     "service_id" INT REFERENCES services(id) NOT NULL,
     "date_performed" DATE NOT NULL,
     "service_price" DECIMAL NOT NULL,
-    "invoice_id" INT REFERENCES invoice(id) NOT NULL
+    "invoice_id" INT REFERENCES invoice(id)
 );
 
-
--- Insert users into the "customers" table
 INSERT INTO customers ("first_name", "last_name", "address", "city", "state", "zip", "email", "phone")
 VALUES
-    ('John', 'Doe', '123 Main St', 'New York', 'NY', 10001, 'john.doe@email.com', 1234567890),
-    ('Jane', 'Smith', '456 Elm St', 'Los Angeles', 'CA', 90001, 'jane.smith@email.com', 9876543210),
-    ('Bob', 'Johnson', '789 Oak St', 'Chicago', 'IL', 60601, 'bob.johnson@email.com', 5551234567),
-    ('Alice', 'Williams', '101 Pine St', 'San Francisco', 'CA', 94101, 'alice@email.com', 9998887777);
-
--- Insert users into the "services" table    
+    ('John', 'Doe', '123 Main St', 'Fargo', 'ND', 58103, 'john.doe@email.com', 1234567890),
+    ('Jane', 'Smith', '456 Elm St', 'Moorhead', 'MN', 56560, 'jane.smith@email.com', 9876543210),
+    ('Bob', 'Johnson', '789 Oak St', 'West Fargo', 'ND', 58078, 'bob.johnson@email.com', 5551234567),
+    ('Alice', 'Williams', '101 Pine St', 'Fargo', 'ND', 58102, 'alice@email.com', 9998887777),
+    ('Brent', 'Olson', '1345 Main St', 'Fargo', 'ND', 58103, 'jane.smith@email.com', 9876543210),
+    ('Jeff', 'Jackson', '1002 Oak St', 'Moorhead', 'MN', 56560, 'bob.johnson@email.com', 5551234567),
+    ('Brittany', 'Williamson', '408 Pine St', 'West Fargo', 'ND', 58078, 'alice@email.com', 9998887777),
+    ('David', 'Brown', '567 Willow St', 'Fargo', 'ND', 58104, 'david.brown@email.com', 8887776666),
+	('Sarah', 'Miller', '789 Oakwood Ave', 'Fargo', 'ND', 58103, 'sarah.miller@email.com', 7776665555),
+	('Michael', 'Wilson', '1010 Birch Ln', 'Fargo', 'ND', 58102, 'michael.wilson@email.com', 6665554444),
+	('Emily', 'Anderson', '321 Cedar Dr', 'Fargo', 'ND', 58104, 'emily.anderson@email.com', 5554443333),
+	('Robert', 'Martinez', '456 Pine Cone Rd', 'Fargo', 'ND', 58103, 'robert.martinez@email.com', 4443332222);
+	
 INSERT INTO services ("service") VALUES ('Weekly Mow and Trim'), ('Spring Clean-up'), ('Fall Clean-up'), ('Aeration'), ('Dethatching'), ('One-Time Mow and Trim');
-
--- Insert users into the "user" table
+	
 INSERT INTO "user" ("username", "email", "password", "is_admin") VALUES ('Carisa', 'carisa.nichols@yahoo.com', '1234', TRUE), ('Rodger', 'rodger.nichols@hersheys.com', '4321', FALSE), ('Alyssa', 'alyssa.s.nichols94@gmail.com', '1234', FALSE), ('Preston', 'preston.e.nichols@gmail.com', '4321', FALSE);
 
-
-SELECT 
-    i.id AS invoice_id,
-    c.first_name AS first_name,
-    c.last_name AS last_name,
-    c.address AS address,
-    c.city AS city,
-    c.state AS state,
-    c.zip AS zip,
-    SUM(l.service_price) AS total_price
-FROM invoice i
-JOIN customers c ON i.customer_id = c.id
-JOIN line_item l ON i.id = l.invoice_id
-GROUP BY i.id, first_name, last_name, address, city, state, zip
-ORDER BY i.id;
-
+SELECT * FROM services;
 
 INSERT INTO invoice ("user_id", "date_issued", "date_paid", "total_price", "customer_id")
-VALUES
-    ((SELECT id FROM "user" WHERE "username" = 'Carisa'), '2023-01-01', '2023-01-10', 100.00, (SELECT id FROM customers WHERE "first_name" = 'John' AND "last_name" = 'Doe')),
-    ((SELECT id FROM "user" WHERE "username" = 'Rodger'), '2023-01-15', '2023-01-25', 150.00, (SELECT id FROM customers WHERE "first_name" = 'Jane' AND "last_name" = 'Smith'));
+SELECT
+    (SELECT id FROM "user" WHERE "username" = 'Carisa'),
+    '2023-10-30',
+    null,
+    (SELECT SUM(service_price) FROM line_item),
+    (SELECT id FROM customers WHERE "first_name" = 'John' AND "last_name" = 'Doe');
+
+
     
 INSERT INTO line_item ("service_id", "date_performed", "service_price", "invoice_id")
 VALUES
-    ((SELECT id FROM services WHERE "service" = 'Weekly Mow and Trim'), '2023-01-05', 50.00, 1),
-    ((SELECT id FROM services WHERE "service" = 'Spring Clean-up'), '2023-01-20', 75.00, 1),
-    ((SELECT id FROM services WHERE "service" = 'Weekly Mow and Trim'), '2023-01-05', 50.00, 2),
-    ((SELECT id FROM services WHERE "service" = 'Fall Clean-up'), '2023-01-10', 60.00, 2);
-
-SELECT 
+    ((SELECT id FROM services WHERE "service" = 'Weekly Mow and Trim'), '2023-10-05', 50.00, 1),
+    ((SELECT id FROM services WHERE "service" = 'Spring Clean-up'), '2023-10-20', 75.00, 1),
+    ((SELECT id FROM services WHERE "service" = 'Weekly Mow and Trim'), '2023-10-12', 50.00, 1),
+    ((SELECT id FROM services WHERE "service" = 'Fall Clean-up'), '2023-01-10', 60.00, 2),
+    ((SELECT id FROM services WHERE "service" = 'Weekly Mow and Trim'), '2023-10-02', 50.00, 3),
+    ((SELECT id FROM services WHERE "service" = 'Spring Clean-up'), '2023-10-14', 75.00, 4),
+    ((SELECT id FROM services WHERE "service" = 'Weekly Mow and Trim'), '2023-10-10', 50.00, 3),
+    ((SELECT id FROM services WHERE "service" = 'Weekly Mow and Trim'), '2023-10-16', 50.00, 3),
+    ((SELECT id FROM services WHERE "service" = 'Weekly Mow and Trim'), '2023-10-24', 50.00, 3);
+    
+    SELECT 
     i.id AS invoice_id,
     c.first_name AS first_name,
     c.last_name AS last_name,
@@ -196,3 +195,15 @@ JOIN customers c ON i.customer_id = c.id
 JOIN line_item l ON i.id = l.invoice_id
 GROUP BY i.id, first_name, last_name, address, city, state, zip
 ORDER BY i.id;
+
+SELECT
+    invoice_id,
+    SUM(service_price) AS total_price
+FROM "line_item"
+WHERE date_performed BETWEEN '2023-01-01' AND '2023-01-30'
+GROUP BY invoice_id
+ORDER BY invoice_id;
+
+SELECT * FROM "line_item" WHERE date_performed BETWEEN '2023-01-01' AND '2023-01-30';
+
+
