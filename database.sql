@@ -158,8 +158,6 @@ INSERT INTO services ("service") VALUES ('Weekly Mow and Trim'), ('Spring Clean-
 	
 INSERT INTO "user" ("username", "email", "password", "is_admin") VALUES ('Carisa', 'carisa.nichols@yahoo.com', '1234', TRUE), ('Rodger', 'rodger.nichols@hersheys.com', '4321', FALSE), ('Alyssa', 'alyssa.s.nichols94@gmail.com', '1234', FALSE), ('Preston', 'preston.e.nichols@gmail.com', '4321', FALSE);
 
-SELECT * FROM services;
-
 INSERT INTO invoice ("user_id", "date_issued", "date_paid", "total_price", "customer_id")
 SELECT
     (SELECT id FROM "user" WHERE "username" = 'Carisa'),
@@ -227,7 +225,7 @@ AFTER INSERT OR UPDATE ON line_item
 FOR EACH ROW
 EXECUTE FUNCTION update_invoice_total_price();
 
--- get arrays for the invoice information of each invoice
+-- get arrays for the invoice information of each invoice- no customer info besides id tho
 SELECT invoice.id AS invoice_id,
        json_agg(line_item.service_id) AS service_ids,
        json_agg(line_item.date_performed) AS dates_performed,
