@@ -259,3 +259,15 @@ LEFT JOIN line_item li ON i.id = li.invoice_id
 LEFT JOIN services AS s ON li.service_id = s.id
 LEFT JOIN customers AS c ON i.customer_id = c.id
 GROUP BY i.id, i.total_price, i.customer_id, c.first_name, c.last_name, c.address, c.city, c.state, c.zip, c.email, c.phone;
+
+INSERT INTO invoice ("user_id", "date_issued", "customer_id")
+SELECT
+    (SELECT id FROM "user" WHERE "username" = 'Carisa'),
+    '2023-10-30',
+    (SELECT id FROM customers WHERE "first_name" = 'Jane' AND "last_name" = 'Smith');
+    
+INSERT INTO invoice ("user_id", "date_issued", "customer_id")
+  SELECT
+      '2',
+      '2023-10-10',
+      '1';

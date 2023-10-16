@@ -96,16 +96,15 @@ router.post("/", (req, res) => {
   console.log(req.user);
   const queryText = `
   INSERT INTO invoice ("user_id", "date_issued", "customer_id")
-  SELECT
+  VALUES (
       $1,
       $2,
-      (SELECT id FROM customers WHERE "first_name" = $3 AND "last_name" = $4);`;
+      $3);`;
   pool
     .query(queryText, [
       req.user.id,
       req.body.date_issued,
-      req.body.first_name,
-      req.body.last_name,
+      req.body.customer_id,
     ])
     .then((response) => {
       res.sendStatus(201);
