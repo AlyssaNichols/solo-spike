@@ -271,3 +271,22 @@ INSERT INTO invoice ("user_id", "date_issued", "customer_id")
       '2',
       '2023-10-10',
       '1';
+
+-- ARRAY OF OBJECTS with key value pairs with service, price, and date
+SELECT i.id AS invoice_id,
+       json_agg(json_build_object('service', s.service, 'price', li.service_price, 'date', li.date_performed)) AS service_data,
+       i.total_price,
+       i.customer_id,
+       c.first_name,
+       c.last_name,
+       c.address,
+       c.city,
+       c.state,
+       c.zip,
+       c.email,
+       c.phone
+FROM invoice i
+LEFT JOIN line_item li ON i.id = li.invoice_id
+LEFT JOIN services AS s ON li.service_id = s.id
+LEFT JOIN customers AS c ON i.customer_id = c.id
+GROUP BY i.id, i.total_price, i.customer_id, c.first_name, c.last_name, c.address, c.city, c.state, c.zip, c.email, c.phone;
