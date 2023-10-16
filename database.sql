@@ -92,6 +92,7 @@ GROUP BY i.id, first_name, last_name, address, city, state, zip
 ORDER BY i.id;
 
 
+
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
@@ -167,7 +168,6 @@ SELECT
     (SELECT SUM(service_price) FROM line_item),
     (SELECT id FROM customers WHERE "first_name" = 'John' AND "last_name" = 'Doe');
 
-
     
 INSERT INTO line_item ("service_id", "date_performed", "service_price", "invoice_id")
 VALUES
@@ -181,6 +181,7 @@ VALUES
     ((SELECT id FROM services WHERE "service" = 'Weekly Mow and Trim'), '2023-10-16', 50.00, 3),
     ((SELECT id FROM services WHERE "service" = 'Weekly Mow and Trim'), '2023-10-24', 50.00, 3);
     
+   -- dont think i need this one actually 
     SELECT 
     i.id AS invoice_id,
     c.first_name AS first_name,
@@ -195,15 +196,68 @@ JOIN customers c ON i.customer_id = c.id
 JOIN line_item l ON i.id = l.invoice_id
 GROUP BY i.id, first_name, last_name, address, city, state, zip
 ORDER BY i.id;
-
-SELECT
-    invoice_id,
-    SUM(service_price) AS total_price
-FROM "line_item"
-WHERE date_performed BETWEEN '2023-01-01' AND '2023-01-30'
-GROUP BY invoice_id
-ORDER BY invoice_id;
+----------------------------------------------
 
 SELECT * FROM "line_item" WHERE date_performed BETWEEN '2023-01-01' AND '2023-01-30';
 
 
+SELECT customer_id, invoice_id, service_id, date_performed, service_price, date_issued, date_paid, total_price FROM line_item
+JOIN invoice i ON line_item.invoice_id = i.id;
+
+
+-- FOR UPDATING TOTAL PRICE IN INVOICE TABLE
+-- Create a function to update total_price
+CREATE OR REPLACE FUNCTION update_invoice_total_price()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE invoice AS i
+    SET total_price = (
+        SELECT COALESCE(SUM(service_price), 0)
+        FROM line_item AS li
+        WHERE li.invoice_id = i.id
+    )
+    WHERE i.id = NEW.invoice_id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create a trigger to call the function after INSERT or UPDATE on line_item
+CREATE TRIGGER update_invoice_total_price_trigger
+AFTER INSERT OR UPDATE ON line_item
+FOR EACH ROW
+EXECUTE FUNCTION update_invoice_total_price();
+
+-- get arrays for the invoice information of each invoice
+SELECT invoice.id AS invoice_id,
+       json_agg(line_item.service_id) AS service_ids,
+       json_agg(line_item.date_performed) AS dates_performed,
+       json_agg(line_item.service_price) AS service_prices,
+       json_agg(s.service) AS services,
+       total_price,
+       customer_id
+FROM invoice
+LEFT JOIN line_item ON invoice.id = line_item.invoice_id
+LEFT JOIN services AS s ON line_item.service_id = s.id
+GROUP BY invoice.id;
+
+-- ONE HUGE TABLE WITH EVERYTHING CONNECTED
+SELECT i.id AS invoice_id,
+       json_agg(li.service_id) AS service_ids,
+       json_agg(li.date_performed) AS dates_performed,
+       json_agg(li.service_price) AS service_prices,
+       json_agg(s.service) AS services,
+       i.total_price,
+       i.customer_id,
+       c.first_name,
+       c.last_name,
+       c.address,
+       c.city,
+       c.state,
+       c.zip,
+       c.email,
+       c.phone
+FROM invoice i
+LEFT JOIN line_item li ON i.id = li.invoice_id
+LEFT JOIN services AS s ON li.service_id = s.id
+LEFT JOIN customers AS c ON i.customer_id = c.id
+GROUP BY i.id, i.total_price, i.customer_id, c.first_name, c.last_name, c.address, c.city, c.state, c.zip, c.email, c.phone;
