@@ -274,7 +274,7 @@ INSERT INTO invoice ("user_id", "date_issued", "customer_id")
 
 -- ARRAY OF OBJECTS with key value pairs with service, price, and date
 SELECT i.id AS invoice_id,
-       json_agg(json_build_object('service', s.service, 'price', li.service_price, 'date', li.date_performed)) AS service_data,
+       json_agg(json_build_object('type', s.service, 'date', li.date_performed, 'price', li.service_price )) AS service_data,
        i.total_price,
        i.customer_id,
        c.first_name,
