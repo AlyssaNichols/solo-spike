@@ -1,8 +1,6 @@
-
-app.use('/api/customers', customersRouter);
-app.use('/api/services', servicesRouter);
-app.use('/api/user', userRouter);
-
+app.use("/api/customers", customersRouter);
+app.use("/api/services", servicesRouter);
+app.use("/api/user", userRouter);
 
 router.get("/", (req, res) => {
   console.log("GET /api/customers");
@@ -92,47 +90,86 @@ router.put("/:id", (req, res) => {
     });
 });
 
-//   // post route-FROM MOVIE ASSIGNMENT. USE AS REFERENCE
-// router.post("/", (req, res) => {
-//     console.log(req.body);
-//     // RETURNING "id" will give us back the id of the created movie
-//     const movieQueryText = `
-//     INSERT INTO "movies" ("title", "poster", "description")
-//     VALUES ($1, $2, $3)
-//     RETURNING "id";`;
+//  post route to add an invoice
+router.post("/", (req, res) => {
+  console.log(req.body);
+  console.log(req.user);
+  const queryText = `
+  INSERT INTO invoice ("user_id", "date_issued", "customer_id")
+  SELECT
+      $1,
+      $2,
+      (SELECT id FROM customers WHERE "first_name" = $3 AND "last_name" = $4);`;
+  pool
+    .query(queryText, [
+      req.user.id,
+      req.body.date_issued,
+      req.body.first_name,
+      req.body.last_name,
+    ])
+    .then((response) => {
+      res.sendStatus(201);
+    })
+    .catch((err) => {
+      console.log("error POSTing invoice", err);
+      res.sendStatus(500);
+    });
+});
 
-//     // FIRST QUERY MAKES MOVIE TO ADD
-//     pool
-//       .query(movieQueryText, [
-//         req.body.title,
-//         req.body.poster,
-//         req.body.description,
-//       ])
-//       .then((result) => {
-//         // ID will show in this console log
-//         console.log("New Movie Id:", result.rows[0].id);
-//         const newMovieId = result.rows[0].id;
+// to add a line item
+router.post("/", (req, res) => {
+  console.log(req.body);
+  console.log(req.user);
+  const queryText = `
+    INSERT INTO line_item ("service_id", "date_performed", "service_price", "invoice_id")
+VALUES
+    $1, $2, $3, $4),`;
+  pool
+    .query(queryText, [
+      req.body.service_id,
+      req.body.date_performed,
+      req.body.service_price,
+      req.body.invoice_id,
+    ])
+    .then((response) => {
+      res.sendStatus(201);
+    })
+    .catch((err) => {
+      console.log("error POSTing invoice", err);
+      res.sendStatus(500);
+    });
+});
 
-//         // GENRE info
-//         const genreQueryText = `
-//         INSERT INTO "movies_genres" ("movie_id", "genre_id")
-//         VALUES  ($1, $2);
-//         `;
-//         // SECOND QUERY ADDS GENRE FOR THAT NEW MOVIE
-//         pool
-//           .query(genreQueryText, [newMovieId, req.body.genre_id])
-//           .then((result) => {
-//             res.sendStatus(201);
-//           })
-//           .catch((err) => {
-//             // catch for second query
-//             console.log(err);
-//             res.sendStatus(500);
-//           });
-//         // Catch for first query
-//       })
-//       .catch((err) => {
-//         console.log(err);
-//         res.sendStatus(500);
-//       });
-//   });
+// GET ALL INVOICE INFORMATION
+router.get("/", (req, res) => {
+  console.log("GET /api/invoice");
+  const queryText = `SELECT i.id AS invoice_id,
+    json_agg(li.service_id) AS service_ids,
+    json_agg(li.date_performed) AS dates_performed,
+    json_agg(li.service_price) AS service_prices,
+    json_agg(s.service) AS services,
+    i.total_price,
+    i.customer_id,
+    c.first_name,
+    c.last_name,
+    c.address,
+    c.city,
+    c.state,
+    c.zip,
+    c.email,
+    c.phone
+FROM invoice i
+LEFT JOIN line_item li ON i.id = li.invoice_id
+LEFT JOIN services AS s ON li.service_id = s.id
+LEFT JOIN customers AS c ON i.customer_id = c.id
+GROUP BY i.id, i.total_price, i.customer_id, c.first_name, c.last_name, c.address, c.city, c.state, c.zip, c.email, c.phone;`;
+  pool
+    .query(queryText)
+    .then((response) => {
+      res.send(response.rows);
+    })
+    .catch((error) => {
+      console.log("Error GET /api/customers", error);
+      res.sendStatus(500);
+    });
+});
